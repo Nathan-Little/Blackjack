@@ -7,6 +7,7 @@ player_hand = []
 hand = []
 deck = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14]*6
 
+
 def deal(deck):
     hand = []
     for i in range(2):
@@ -68,7 +69,7 @@ def print_results(dealer_hand, player_hand):
 	print("The dealer has a " + str(dealer_hand) + " for a total of " + str(total(dealer_hand)))
 	print("You have a " + str(player_hand) + " for a total of " + str(total(player_hand)))
 
-def blackjack(dealer_hand, player_hand):
+def is_blackjack(dealer_hand, player_hand):
 	if total(player_hand) == 21:
 			print_results(dealer_hand, player_hand)
 			print("Congratulations! You got a Blackjack!\n")
@@ -108,8 +109,12 @@ def game():
 	while choice != "q":
 		print("The dealer is showing a " + str(dealer_hand[0]))
 		print("You have a " + str(player_hand) + " for a total of " + str(total(player_hand)))
-		blackjack(dealer_hand, player_hand)
+		is_blackjack(dealer_hand, player_hand)
+		###
 		choice = input("Do you want to [H]it, [S]tand, or [Q]uit: ").lower()
+		# Use Q bot to determine if the bot should stay or hit
+		# choice = qbot(dealer_hand, player_hand)
+		###
 		clear()
 		if choice == "h":
 			hit(player_hand)
@@ -126,6 +131,74 @@ def game():
 			print("Bye!")
 			exit()
 
+def qbot(dealer_hand, player_hand, numEpisodes):
+	policy = initializeQ()
+	
+	for i in range(numEpisodes):
+		action = get_action(dealer_hand, player_hand)
+
+def get_action(dealer_hand, player_hand):
+	aceBool = containsAce(player_hand)
+	player_total = 0
+	for card in player_hand:
+		if card == 'J':player_total += 10
+		elif card == 'Q':player_total += 10
+		elif card == 'K':player_total += 10
+		elif card == 'A':player_total += 11 # assume that aces are eleven, initially, decide whether it is 11 or 1 later
+		else: 
+			player_total += card
+	
+	dealer_card = None
+	if dealer_hand[0] == 'J': dealer_card = 10
+	elif dealer_hand[0] == 'Q': dealer_card = 10
+	elif dealer_hand[0] == 'K': dealer_card = 10
+	elif dealer_hand[0] == 'A': dealer_card = 11
+	else:
+		dealer_card = dealer_hand[0]
+	action = policy[[player_total, dealer_card, aceBool]]
+	return action
+    		
+def containsAce(player_hand):
+	if 'A' in player_hand:
+		return 1
+	return 0
+
+def initializeQ():
+	# initialize Q(s,a) in dictionary where state -> action (maybe move to helper)
+	# playerHand, Dealer, isSoft (1-> soft)
+	actions = ['h', 's']
+	possibleTotals = [3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21]
+	possibleDealerFirstCard = [2, 3, 4, 5, 6, 7, 8, 9, 10, 14]
+	tempStates = []
+	for i in possibleTotals:
+		for j in possibleDealerFirstCard:
+			tempStates.append([i,j])
+	
+	states = []
+	for i in tempStates:
+		for j in range(2):
+			states.append(i + [j])
+
+	policy = {}
+	for i in range(len(states)):
+		policy[states[i]] = 'h'
+
+	return policy
 
 if __name__ == "__main__":
-   game()
+	qbot([],[], 1)
+	# game()
+
+
+
+	
+
+# Initialize Q(s, a) arbitrarily
+# Repeat (for each episode):
+# 	Choose a from s using policy derived from QTake action a, 
+# 	observe r, and s'Q(s, a) ⇐Q(s, a) +  [r +  maxa'Q(s', a') ­ Q(s, a)]
+# 	s ⇐s
+# 	'until s is terminal
+
+# 	States are values
+# 	policies are determined by value -> action (h,s)
