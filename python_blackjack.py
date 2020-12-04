@@ -1,7 +1,7 @@
 import os
 import random
 import numpy as np
-
+import pickle5 as pickle
 
 dealer_hand = []
 player_hand = []
@@ -9,8 +9,15 @@ hand = []
 policy = {}
 actions = ['h', 's']
 
-deck = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14]*6
+deck = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14]
 
+def save_obj(obj, name ):
+    with open('obj/'+ name + '.pkl', 'wb') as f:
+        pickle.dump(obj, f, pickle.HIGHEST_PROTOCOL)
+
+def load_obj(name ):
+    with open('obj/' + name + '.pkl', 'rb') as f:
+        return pickle.load(f)
 
 def deal(deck):
 	hand = []
@@ -23,18 +30,6 @@ def deal(deck):
 		if card == 14:card = "A"
 		hand.append(card)
 	return hand
-
-def play_again():
-	global dealer_hand, player_hand, deck
-	again = input("Do you want to play again? (Y/N) : ").lower()
-	if again == "y":
-		dealer_hand = []
-		player_hand = []
-		deck = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14]*6
-		game()
-	else:
-		print("Bye!")
-		exit()
 
 def total(hand):
 	total = 0
@@ -76,102 +71,155 @@ def print_results(dealer_hand, player_hand):
 
 def is_blackjack(dealer_hand, player_hand):
 	if total(player_hand) == 21:
-		print_results(dealer_hand, player_hand)
-		print("Congratulations! You got a Blackjack!\n")
-		play_again()
+		return 1
 	elif total(dealer_hand) == 21:
-		print_results(dealer_hand, player_hand)
-		print("Sorry, you lose. The dealer got a blackjack.\n")
-		play_again()
+		return -1
+	else:
+		return 0
 
 def score(dealer_hand, player_hand):
 	if total(player_hand) == 21:
-		# print_results(dealer_hand, player_hand)
-		print("Congratulations! You got a blackjack!\n")
 		return 1
 	elif total(dealer_hand) == 21:
-		# print_results(dealer_hand, player_hand)
-		print("Sorry, you lose. The dealer got a blackjack.\n")
 		return -1
 	elif total(player_hand) > 21:
-		# print_results(dealer_hand, player_hand)
-		print("Sorry. You busted. You lose.\n")
 		return -1
 	elif total(dealer_hand) > 21:
-		# print_results(dealer_hand, player_hand)
-		print("The dealer busted. You win!\n")	
 		return 1
 	elif total(player_hand) < total(dealer_hand):
-		# print_results(dealer_hand, player_hand)
-		print("Sorry. Your score isn't higher than the dealer. You lose.\n")
 		return -1
 	elif total(player_hand) > total(dealer_hand):
-		# print_results(dealer_hand, player_hand)
-		print("Congratulations. Your score is higher than the dealer. You win!\n")
 		return 1
 	elif total(player_hand) == total(dealer_hand):
-		print("You tied!")
 		return 0
 	else:
 		return 0
 
-def game():
-	choice = 0
-	clear()
-	print("Welcome to Blackjack!\n")
-	deck = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14] * 6
-	dealer_hand = deal(deck)
-	player_hand = deal(deck)
-	while choice != "q":
-		print("The dealer is showing a " + str(dealer_hand[0]))
-		print("You have a " + str(player_hand) + " for a total of " + str(total(player_hand)))
-		is_blackjack(dealer_hand, player_hand)
-		###
-		choice = input("Do you want to [H]it, [S]tand, or [Q]uit: ").lower()
-		# Use Q bot to determine if the bot should stay or hit
-		# choice = qbot(dealer_hand, player_hand)
-		###
-		clear()
-		if choice == "h":
-			hit(player_hand)
-			while total(dealer_hand) < 17:
-				hit(dealer_hand)
-			score(dealer_hand, player_hand)
-			play_again()
-		elif choice == "s":
-			while total(dealer_hand) < 17:
-				hit(dealer_hand)
-			score(dealer_hand, player_hand)
-			play_again()
-		elif choice == "q":
-			print("Bye!")
-			exit()
-
-def qbot(dealer_hand, player_hand, numEpisodes):
-	global policy, actions
-	currReward = 0
-	currAction = ''
+def qbot(num_episodes):
+	global policy, actions, deck
+	reward = 0
+	curr_action_index = ''
+	curr_action = 'h'
+	alpha = .2
+	discount = .99
+	player_total = 0
+	dealer_hand = []
+	player_hand = []
 	policy = initializeQ()
 
-	for i in range(numEpisodes):
+	for i in range(num_episodes):
+		dealer_hand = deal(deck)
+		player_hand = deal(deck)
+		# check if game is already over
+		if is_blackjack(dealer_hand, player_hand) == 0:
+			while curr_action == 'h' and player_total < 21:
+				
+				player_total, dealer_card, ace_bool = evaluateHands(dealer_hand, player_hand)
+				# check if player busted
+				print("Player's Hand: ")
+				print(player_hand)
+				print("Player total: " + str(player_total))
+				print("Dealer's hand: ")
+				print(dealer_hand)
+				print("Dealer's first card: " + str(dealer_card))
+				print("ace bool: " + str(ace_bool))
+				print("\n")
+				if player_total > 21:
+    				### Return later
+					# How to update if player busts?????
+					# calculate the reward for when the player busts
+					# Reward should be based on observable info
+					reward = score(dealer_hand, player_hand)
 
-		currAction = get_action(dealer_hand, player_hand)
-		if currAction == 'h':
-			hit(player_hand)
-			currReward = score(dealer_hand, player_hand)
-			player_total, aceBool = evaluateHands(dealer_hand, player_hand)
-			policy[[player_total, dealer_card, aceBool, currAction]][1] += currReward
+					# update the Q(s, a) estimated reward which caused the bust
+					policy[curr_state][curr_action_index] += alpha * (reward + (discount * policy[next_state][next_action_index] - policy[curr_state][curr_action_index]))
 
+					continue
 
+				curr_state = (player_total, dealer_card, ace_bool)
+				# -----Choose A from S using policy derived from Q------
+				curr_action_index = get_action(player_total, dealer_card, ace_bool)
+				
+				curr_action = actions[curr_action_index]
+				print("Curr action: " + curr_action)
+				# ------Take action A------
+				if curr_action == 'h':
+					# save previous hand in case the player busts
+					prev_player_hand = player_hand
 
-		elif currAction == 's':
+					next_player_hand = hit(player_hand)
+					print("Next player hand:")
+					print(next_player_hand)
+					
+					# -----Observe R------
+					# when we calculate the reward, should we use dealer_hand?????
+					# Jaisdjofjoisadoifsadoijfjoidsaofij
+					# ASK R ------------------------------------------------------------------------------------------------------
+					reward = score(dealer_hand, next_player_hand)
+					print("Reward: ")
+					print(reward)
+
+					# -----Observe S------
+					# - Get the new player total and the new ace bool
+					# IS THERE A REASON TO CALCULATE NEXT ACE BOOL?????????????
+					next_player_total, next_ace_bool = evaluatePlayer(next_player_hand)
+					print("Next player total: ")
+					print(next_player_total)
+					# Now, how do we handle the dealer? We are basing our states off the assumption, that the player
+					# would only ever see the dealer's first card
+
+					# Set the new state the player is in
+					next_state = (next_player_total, dealer_card, next_ace_bool)
+					print("Next state: ")
+					print(next_state)
+
+					next_action_index = get_action(next_player_total, dealer_card, next_ace_bool)
+
+					# Q(s, a) <- Q(s, a) + Alpha[reward + discount( argmax(  Q(next_state, best_next_action) - Q(s, a))  )  ]
+					policy[curr_state][curr_action_index] += alpha * (reward + (discount * policy[next_state][next_action_index] - policy[curr_state][curr_action_index]))
+					player_hand = next_player_hand
+					player_total = next_player_total
+					ace_bool = next_ace_bool
+
+					print("-------------------------\n")
+
 			while total(dealer_hand) < 17:
-				hit(dealer_hand)
-			currReward = score(dealer_hand, player_hand)
-			player_total, dealer_card, aceBool = evaluateHands(dealer_hand, player_hand)
-			policy[[player_total, dealer_card, aceBool, currAction]][1] += currReward
+				next_dealer_hand = hit(dealer_hand)
+			
+			if total(dealer_hand) >= 17:
+				next_dealer_hand = dealer_hand
+			
+			reward = score(next_dealer_hand, player_hand)
+			# -----Observe S------
+			# - Get the new player total and the new ace bool
 
-def evaluateAllHandsOnlyFirstForDealer(dealer_hand, player_hand):
+			# Now, how do we handle the dealer? We are basing our states off the assumption, that the player
+			# would only ever see the dealer's first card
+
+			# Set the new state the player is in
+			next_state = (player_total, getDealerCard(next_dealer_hand[0]), ace_bool)
+
+			next_action_index = get_action(player_total, getDealerCard(next_dealer_hand[0]), ace_bool)
+			print("Updating after stand......")
+			# Q(s, a) <- Q(s, a) + Alpha[reward + discount( argmax(  Q(next_state, best_next_action) - Q(s, a))  )  ]
+			policy[curr_state][curr_action_index] += alpha * (reward + (discount * policy[next_state][next_action_index] - policy[curr_state][curr_action_index]))
+
+			dealer_hand = []
+			player_hand = []
+			player_total = 0
+			curr_action = 'h'
+			deck = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14]
+	save_obj(policy, "policy1")
+	print(policy)
+
+def getDealerCard(dealer_card):
+		if dealer_card == 'J': dealer_card = 10
+		elif dealer_card == 'Q': dealer_card = 10
+		elif dealer_card == 'K': dealer_card = 10
+		elif dealer_card == 'A': dealer_card = 11
+		return dealer_card + 10
+
+def evaluateHands(dealer_hand, player_hand):
 	aceBool = containsAce(player_hand)
 	player_total = 0
 	for card in player_hand:
@@ -190,9 +238,10 @@ def evaluateAllHandsOnlyFirstForDealer(dealer_hand, player_hand):
 	else:
 		dealer_card = dealer_hand[0]
 
-	return player_total, dealer_card, aceBool
+	# add ten to dealer card for hidden card assumption
+	return player_total, dealer_card + 10, aceBool
 
-def evaluatePlayerHandOnly(dealer_hand, player_hand):
+def evaluatePlayer(player_hand):
 	aceBool = containsAce(player_hand)
 	player_total = 0
 	for card in player_hand:
@@ -203,27 +252,24 @@ def evaluatePlayerHandOnly(dealer_hand, player_hand):
 		else: 
 			player_total += card
 
-	return player_total, dealer_card, aceBool
+	return player_total, aceBool
 
-def get_action(dealer_hand, player_hand):
-	player_total, dealer_card, aceBool = evaluateAllHandsOnlyFirstForDealer(dealer_hand, player_hand)
+# good to go
+def get_action(player_total, dealer_card, aceBool):
 		
-	possRewards = []
-	for possAction in actions:
-		possRewards.append(policy[[player_total, dealer_card, aceBool, possAction]][1])
+	possRewards = policy[(player_total, dealer_card, aceBool)]
 
-	possAltRewards = []
 	if aceBool:
-		for possAction in actions:
-			possAltRewards.append(policy[[player_total - 10, dealer_card, aceBool, possAction]][1])
+		possAltRewards = policy[(player_total - 10, dealer_card, aceBool)]
 	
-	if max(possAltRewards) >= max(possRewards):
-		possRewards = possAltRewards
+		if max(possAltRewards) >= max(possRewards):
+			possRewards = possAltRewards
+
 
 	currActionIndex = np.argmax(possRewards) 
 	# use argmax on a list of all the possible rewards to choose currAction
 	
-	return actions[currActionIndex]
+	return currActionIndex
     		
 def containsAce(player_hand):
 	if 'A' in player_hand:
@@ -233,40 +279,27 @@ def containsAce(player_hand):
 def initializeQ():
 	# initialize Q(s,a) in dictionary where state -> action (maybe move to helper)
 	# playerHand, Dealer, isSoft (1-> soft)
+	# 
+	possibleTotals = [3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32]
+	possibleDealerFirstCard = [12, 13, 14, 15, 16, 17, 18, 19, 20, 21]
 	
-	possibleTotals = [3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21]
-	possibleDealerFirstCard = [2, 3, 4, 5, 6, 7, 8, 9, 10, 14]
 	tempStates = []
 	for i in possibleTotals:
 		for j in possibleDealerFirstCard:
-			tempStates.append([i,j])
+			tempStates.append((i,j))
 	
 	states = []
 	for i in tempStates:
 		for j in range(2):
-			# Keys are [playerTotal, dealerFirstCard, aceBool, Action]
-			states.append(i + [j] + [['h', 's'][j]])
+			# Keys are [playerTotal, dealerFirstCard, aceBool]
+			states.append(i + (j,))
 
 	for i in range(len(states)):
-		# values are [action, reward]
-		policy[states[i]] = ['h', 0]
+		# values are [reward for 'h', reward for 's']
+		policy[states[i]] = [0, 0]
 
 	return policy
 
 if __name__ == "__main__":
-	qbot([],[], 1)
+	qbot(1000)
 	# game()
-
-
-
-	
-
-# Initialize Q(s, a) arbitrarily
-# Repeat (for each episode):
-# 	Choose a from s using policy derived from QTake action a, 
-# 	observe r, and s'Q(s, a) ⇐Q(s, a) +  [r +  maxa'Q(s', a') ­ Q(s, a)]
-# 	s ⇐s
-# 	'until s is terminal
-
-# 	States are values
-# 	policies are determined by value -> action (h,s)
