@@ -422,9 +422,20 @@ def get_action(player_total, dealer_card, aceBool):
 		if max(possAltRewards) >= max(possRewards):
 			possRewards = possAltRewards
 
-
-	currActionIndex = np.argmax(possRewards) 
-	# use argmax on a list of all the possible rewards to choose currAction
+	# Sum up rewards (first making them positive)
+	reward_sum = 0
+	for i in possRewards:
+		if i < 0:
+			i = i * -1
+		reward_sum += i
+	
+	# divide each reward by the total
+	choice_probs = []
+	for i in possRewards:
+		choice_probs.append(i / reward_sum)
+	
+	# choose action according to the probability distribution 
+	currActionIndex = np.random.choice(np.arange(len(choice_probs)), p = choice_probs)	
 	
 	return currActionIndex
     		
@@ -459,5 +470,5 @@ def initializeQ():
 
 if __name__ == "__main__":
 	# qbot(1000000)
-	play_game_with_qbot_policy(1)
+	play_game_with_qbot_policy(100000)
 	# game()
