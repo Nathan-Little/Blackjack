@@ -122,6 +122,285 @@ def printFinalScore(dealer_hand, player_hand):
 	else:
 		print("Tie")
 		return 0
+def play_game_with_oracle_policy(num_games):
+	global deck, actions
+	player_total = 0
+	dealer_hand = []
+	player_hand = []
+	wins, ties, losses = 0, 0, 0
+
+	for i in range(num_games):
+		dealer_hand = deal(deck)
+		player_hand = deal(deck)
+
+		# check if either player has blackjack
+		if is_blackjack(dealer_hand, player_hand) == 0:
+			# if not
+			player_total, dealer_card, ace_bool = evaluateHands(dealer_hand, player_hand)
+			curr_action = static_policy(player_total, dealer_card)
+			
+			# Player hits
+			while curr_action == 'h' and player_total < 21:
+				player_total, dealer_card, ace_bool = evaluateHands(dealer_hand, player_hand)
+				# check if player busted
+				print("Player's Hand: ")
+				print(player_hand)
+				print("Player total: " + str(player_total))
+				print("Dealer's hand: ")
+				print(dealer_hand)
+				print("Dealer's first card: " + str(dealer_card))
+				print("ace bool: " + str(ace_bool))
+				print("\n")
+
+				if player_total > 21:
+					printFinalScore(dealer_hand, player_hand)
+					continue
+				curr_action = static_policy(player_total, dealer_card)
+
+				if curr_action == 'h':
+					next_player_hand = hit(player_hand)
+					player_hand = next_player_hand
+
+			print("------BUST OR STAND------")
+
+			while total(dealer_hand) < 17:
+				next_dealer_hand = hit(dealer_hand)
+			
+			if total(dealer_hand) >= 17:
+				next_dealer_hand = dealer_hand
+			
+			# Calculate final reward
+			final_score = printFinalScore(next_dealer_hand, player_hand)
+
+			if final_score == 1:
+				wins += 1
+			elif final_score == 0:
+				ties += 1
+			else:
+				losses += 1
+			
+		# Reset table
+		dealer_hand = []
+		player_hand = []
+		player_total = 0
+		deck = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14] * 4
+	
+	print("Wins: ")
+	print(wins)
+	print("Ties: ")
+	print(ties)
+	print("Losses: ")
+	print(losses)
+	print("Win Differential: ")
+	print(wins - losses)
+
+def oracle_policy(player_total, dealer_total):
+	if 4 <= player_total <= 11:
+			curr_action = 'h'
+	elif player_total == 12:
+		if 4 <= dealer_total <= 6:
+			curr_action = 's'
+		else:
+			curr_action = 'h'
+	elif 13 <= player_total <= 16:
+		if dealer_total <= 6:
+			curr_action = 's'
+		else:
+			curr_action = 'h'
+	else:
+		curr_action = 's'
+
+	return curr_action
+
+def play_game_with_static_policy(num_games):
+	global deck, actions
+	player_total = 0
+	dealer_hand = []
+	player_hand = []
+	wins, ties, losses = 0, 0, 0
+
+	for i in range(num_games):
+		dealer_hand = deal(deck)
+		player_hand = deal(deck)
+
+		# check if either player has blackjack
+		if is_blackjack(dealer_hand, player_hand) == 0:
+			# if not
+			player_total, dealer_card, ace_bool = evaluateHands(dealer_hand, player_hand)
+			curr_action = static_policy(player_total, dealer_card)
+			
+			# Player hits
+			while curr_action == 'h' and player_total < 21:
+				player_total, dealer_card, ace_bool = evaluateHands(dealer_hand, player_hand)
+				# check if player busted
+				print("Player's Hand: ")
+				print(player_hand)
+				print("Player total: " + str(player_total))
+				print("Dealer's hand: ")
+				print(dealer_hand)
+				print("Dealer's first card: " + str(dealer_card))
+				print("ace bool: " + str(ace_bool))
+				print("\n")
+
+				if player_total > 21:
+					printFinalScore(dealer_hand, player_hand)
+					continue
+				curr_action = static_policy(player_total, dealer_card)
+
+				if curr_action == 'h':
+					next_player_hand = hit(player_hand)
+					player_hand = next_player_hand
+
+			print("------BUST OR STAND------")
+
+			while total(dealer_hand) < 17:
+				next_dealer_hand = hit(dealer_hand)
+			
+			if total(dealer_hand) >= 17:
+				next_dealer_hand = dealer_hand
+			
+			# Calculate final reward
+			final_score = printFinalScore(next_dealer_hand, player_hand)
+
+			if final_score == 1:
+				wins += 1
+			elif final_score == 0:
+				ties += 1
+			else:
+				losses += 1
+			
+		# Reset table
+		dealer_hand = []
+		player_hand = []
+		player_total = 0
+		deck = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14] * 4
+	
+	print("Wins: ")
+	print(wins)
+	print("Ties: ")
+	print(ties)
+	print("Losses: ")
+	print(losses)
+	print("Win Differential: ")
+	print(wins - losses)
+
+def static_policy(player_total, dealer_first_card):
+	if 4 <= player_total <= 11:
+		curr_action = 'h'
+	elif player_total == 12:
+		if 4 <= dealer_first_card <= 6:
+			curr_action = 's'
+		else:
+			curr_action = 'h'
+	elif 13 <= player_total <= 16:
+		if dealer_first_card <= 6:
+			curr_action = 's'
+		else:
+			curr_action = 'h'
+	else:
+		curr_action = 's'
+
+	return curr_action
+
+def static_policy_soft_hand(player_hand, dealer_first_card):
+	if 13 <= player_hand <= 17:
+		curr_action = 'h'
+	elif player_hand == 18:
+		if 9 <= dealer_first_card <= 10:
+			curr_action = 'h'
+		else:
+			curr_action = 's'
+	else:
+		curr_action = 's'
+	return curr_action
+
+def play_game_with_random_policy(num_games):
+	#### random decision concerning ace
+	global deck, actions
+	player_total = 0
+	dealer_hand = []
+	player_hand = []
+	wins, ties, losses = 0, 0, 0
+
+	for i in range(num_games):
+		dealer_hand = deal(deck)
+		player_hand = deal(deck)
+
+		# check if either player has blackjack
+		if is_blackjack(dealer_hand, player_hand) == 0:
+			# if not
+			curr_action = coinflip()
+			
+			# Player hits
+			while curr_action == 'h' and player_total < 21:
+				player_total, dealer_card, ace_bool = evaluateHands(dealer_hand, player_hand)
+				# if ace_bool == 1:
+				# 	random_ace = random.uniform(0,1)
+				# 	if random_ace > 0.5:
+				# 		player_total = player_total - 10
+
+				# check if player busted
+				print("Player's Hand: ")
+				print(player_hand)
+				print("Player total: " + str(player_total))
+				print("Dealer's hand: ")
+				print(dealer_hand)
+				print("Dealer's first card: " + str(dealer_card))
+				print("ace bool: " + str(ace_bool))
+				print("\n")
+
+				if player_total > 21:
+					printFinalScore(dealer_hand, player_hand)
+					continue
+				curr_action = coinflip()
+
+				if curr_action == 'h':
+					next_player_hand = hit(player_hand)
+					player_hand = next_player_hand
+
+			print("------BUST OR STAND------")
+
+			while total(dealer_hand) < 17:
+				next_dealer_hand = hit(dealer_hand)
+			
+			if total(dealer_hand) >= 17:
+				next_dealer_hand = dealer_hand
+			
+			# Calculate final reward
+			final_score = printFinalScore(next_dealer_hand, player_hand)
+
+			if final_score == 1:
+				wins += 1
+			elif final_score == 0:
+				ties += 1
+			else:
+				losses += 1
+			
+		# Reset table
+		dealer_hand = []
+		player_hand = []
+		player_total = 0
+		deck = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14] * 4
+	
+	print("Wins: ")
+	print(wins)
+	print("Ties: ")
+	print(ties)
+	print("Losses: ")
+	print(losses)
+	print("Win Differential: ")
+	print(wins - losses)
+
+def coinflip():
+	coinflip = random.uniform(0, 1)
+	if coinflip > 0.5:
+		curr_action = 'h'
+	else:
+		curr_action = 's'
+
+	print("First action: ")
+	print(curr_action)
+	return curr_action
 
 def play_game_with_qbot_policy(num_games, policy_string):
 	global deck, policy, actions
@@ -235,6 +514,8 @@ def play_game_with_qbot_policy(num_games, policy_string):
 	print(ties)
 	print("Losses: ")
 	print(losses)
+	print("Win Differential: ")
+	print(wins - losses)
 	
 def play_game_with_qbot_policy(num_games, policy_string):
 	global deck, policy, actions
@@ -348,6 +629,8 @@ def play_game_with_qbot_policy(num_games, policy_string):
 	print(ties)
 	print("Losses: ")
 	print(losses)
+	print("Win Differential: ")
+	print(wins - losses)
 
 def qbot(num_episodes):
 	global policy, actions, deck
@@ -526,7 +809,7 @@ def qbot(num_episodes):
 
 			
 	save_obj(policy, "policy3Rework")
-	print(policy)
+	# print(policy)
 
 def getDealerCard(dealer_card):
 		if dealer_card == 'J': dealer_card = 10
@@ -646,7 +929,10 @@ def initializeQ():
 
 	return policy
 
+
 if __name__ == "__main__":
 	# qbot(100000)
 	play_game_with_qbot_policy(100000, "policy3Rework")
+	# play_game_with_random_policy(1000)
+	# play_game_with_static_policy(1000)
 	# game()
