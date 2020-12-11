@@ -404,7 +404,7 @@ def coinflip():
 	print(curr_action)
 	return curr_action
 
-def play_game_with_qbot_policy(num_games, policy_string):
+def play_game_with_qbot_policy(num_games, policy_string, eps):
 	global deck, policy, actions
 	player_total = 0
 	dealer_hand = []
@@ -426,7 +426,7 @@ def play_game_with_qbot_policy(num_games, policy_string):
 			player_total, dealer_card, ace_bool = evaluateHands(dealer_hand, player_hand)
 
 			# -----Choose index of A from S using policy derived from Q------
-			curr_action_index = get_action(player_total, dealer_card, ace_bool)
+			curr_action_index = get_action(player_total, dealer_card, ace_bool, eps)
 			# print("Current State:")
 			# print([player_total, dealer_card, ace_bool])
 			
@@ -459,7 +459,7 @@ def play_game_with_qbot_policy(num_games, policy_string):
 					continue
 
 				# -----Choose A from S using policy derived from Q------
-				curr_action_index = get_action(player_total, dealer_card, ace_bool)
+				curr_action_index = get_action(player_total, dealer_card, ace_bool, eps)
 				
 				curr_action = actions[curr_action_index]
 
@@ -521,11 +521,11 @@ def play_game_with_qbot_policy(num_games, policy_string):
 
 	with open("Analysis.csv", 'a+', newline='') as csvfile:
                     csvwriter = csv.writer(csvfile)
-                    csvwriter.writerow([policy_string, wins, ties, losses, wins - losses, 0.3, 0.7])
+                    csvwriter.writerow([policy_string, wins, ties, losses, wins - losses, 0.3, 0.9, eps])
 	
 # 
 
-def qbot(num_episodes, policy_name):
+def qbot(num_episodes, policy_name, eps):
 	global policy, actions, deck
 	
 	# initialize
@@ -533,7 +533,7 @@ def qbot(num_episodes, policy_name):
 	curr_action_index = None
 	
 	alpha = .3
-	discount = 0.7
+	discount = 0.9
 	player_total = 0
 	dealer_hand = []
 	player_hand = []
@@ -551,7 +551,7 @@ def qbot(num_episodes, policy_name):
 		curr_state = (player_total, dealer_card, ace_bool)
 		
 		# Find the index of the action that the policy says to play
-		curr_action_index = get_action(player_total, dealer_card, ace_bool)
+		curr_action_index = get_action(player_total, dealer_card, ace_bool, eps)
 		
 		# Find the action to play
 		curr_action = actions[curr_action_index]
@@ -591,8 +591,13 @@ def qbot(num_episodes, policy_name):
 					# Calculate final reward
 					final_reward = score(dealer_hand, next_player_hand)
 
-					# update the Q(s, a) estimated reward which caused the bust
-					policy[curr_state][curr_action_index] += alpha * (final_reward + (discount * policy[next_state][next_action_index] - policy[curr_state][curr_action_index]))
+					# Pass backwards through the states and actions; update the policy for each (s, a)
+					for i in range(len(next_states_list) - 1, -1, -1):
+						
+						policy[curr_states_list[i]][curr_actions_list[i]] += alpha * (final_reward + (discount * policy[next_states_list[i]][next_actions_list[i]] - policy[curr_states_list[i]][curr_actions_list[i]]))
+
+					# # update the Q(s, a) estimated reward which caused the bust
+					# policy[curr_state][curr_action_index] += alpha * (final_reward + (discount * policy[next_state][next_action_index] - policy[curr_state][curr_action_index]))
 
 					continue
 				
@@ -600,7 +605,7 @@ def qbot(num_episodes, policy_name):
 				curr_state = (player_total, dealer_card, ace_bool)
 
 				# Find the index of the action that the policy says to play
-				curr_action_index = get_action(player_total, dealer_card, ace_bool)
+				curr_action_index = get_action(player_total, dealer_card, ace_bool, eps)
 				
 				# Find the action to play
 				curr_action = actions[curr_action_index]
@@ -629,7 +634,7 @@ def qbot(num_episodes, policy_name):
 					# print(next_state)
 
 					# Find the next best action the policy says to take
-					next_action_index = get_action(next_player_total, dealer_card, next_ace_bool)
+					next_action_index = get_action(next_player_total, dealer_card, next_ace_bool, eps)
 					
 					# Append the states and actions to their lists
 					if next_state not in next_states_list and curr_state not in curr_states_list:
@@ -660,20 +665,6 @@ def qbot(num_episodes, policy_name):
 			# In case that dealer's hand was above 17 off the start
 			if total(dealer_hand) >= 17:
 				next_dealer_hand = dealer_hand
-			
-			# Set the new state the player is in
-			next_state = (player_total, getDealerCard(next_dealer_hand[0]), ace_bool)
-
-			# Find the next best action to take
-			next_action_index = get_action(player_total, getDealerCard(next_dealer_hand[0]), ace_bool)
-			
-			# Add states and actions to their lists
-			if next_state not in next_states_list and curr_state not in curr_states_list:
-					next_states_list.append(next_state)
-					curr_states_list.append(curr_state)
-					
-					curr_actions_list.append(curr_action_index)
-					next_actions_list.append(next_action_index)
 			
 			# Calculate final reward since game is over
 			final_reward = score(next_dealer_hand, next_player_hand)
@@ -748,13 +739,13 @@ def evaluatePlayer(player_hand):
 
 
 # good to go
-def get_action(player_total, dealer_card, aceBool):
+def get_action(player_total, dealer_card, aceBool, eps):
 		
 	possRewards = policy[(player_total, dealer_card, aceBool)]
 
 	if aceBool:
 		possAltRewards = policy[(player_total - 10, dealer_card, aceBool)]
-	
+		# find which set of rewards is larger
 		if max(possAltRewards) >= max(possRewards):
 			possRewards = possAltRewards
 	
@@ -801,124 +792,11 @@ def initializeQ():
 
 
 if __name__ == "__main__":
-	qbot(1000000, 'policy15')
-	play_game_with_qbot_policy(100000, "policy15")
+	# qbot(1000000, 'policy22', 0.1)
+	# play_game_with_qbot_policy(100000, "policy22", 0.1)
+
+
 	# play_game_with_random_policy(1000)
-	# play_game_with_static_policy(1000)
+	play_game_with_static_policy(100000)
 	# game()
-
-# def play_game_with_qbot_policy(num_games, policy_string):
-#     # 	global deck, policy, actions
-# 	player_total = 0
-# 	dealer_hand = []
-# 	player_hand = []
-# 	wins, ties, losses = 0, 0, 0
-# 	# load in trained policy
-# 	policy = load_obj(policy_string)
-# 	# print(policy)
-
-# 	for i in range(num_games):
-# 		# deal hands
-# 		dealer_hand = deal(deck)
-# 		player_hand = deal(deck)
-
-# 		# check if either player has blackjack
-# 		if is_blackjack(dealer_hand, player_hand) == 0:
-
-# 			# Retrieve current state
-# 			player_total, dealer_card, ace_bool = evaluateHands(dealer_hand, player_hand)
-
-# 			# -----Choose index of A from S using policy derived from Q------
-# 			curr_action_index = get_action(player_total, dealer_card, ace_bool)
-# 			print("Current State:")
-# 			print([player_total, dealer_card, ace_bool])
-			
-# 			# Use index of A to get A
-# 			curr_action = actions[curr_action_index]
-# 			print("First action: ")
-# 			print(curr_action)
-
-# 			# Player hits
-# 			while curr_action == 'h' and player_total < 21:
-				
-# 				player_total, dealer_card, ace_bool = evaluateHands(dealer_hand, player_hand)
-# 				# check if player busted
-# 				print("Player's Hand: ")
-# 				print(player_hand)
-# 				print("Player total: " + str(player_total))
-# 				print("Dealer's hand: ")
-# 				print(dealer_hand)
-# 				print("Dealer's first card: " + str(dealer_card))
-# 				print("ace bool: " + str(ace_bool))
-# 				print("\n")
-
-# 				if player_total > 21:
-#     				### Return later
-# 					# How to update if player busts?????
-# 					# calculate the reward for when the player busts
-# 					# Reward should be based on observable info
-# 					printFinalScore(dealer_hand, next_player_hand)
-
-# 					continue
-
-# 				# -----Choose A from S using policy derived from Q------
-# 				curr_action_index = get_action(player_total, dealer_card, ace_bool)
-				
-# 				curr_action = actions[curr_action_index]
-
-# 				print("Next action:")
-# 				print(curr_action)
-# 				# print("Curr action: " + curr_action)
-# 				# ------Take action A------
-# 				if curr_action == 'h':
-
-# 					next_player_hand = hit(player_hand)
-
-					
-# 					player_hand = next_player_hand
-
-# 			print("------BUST OR STAND------")
-
-# 			next_player_hand = player_hand
-			
-# 			while total(dealer_hand) < 17:
-# 				next_dealer_hand = hit(dealer_hand)
-			
-# 			if total(dealer_hand) >= 17:
-# 				next_dealer_hand = dealer_hand
-			
-# 			# reward = score(next_dealer_hand, player_hand)
-# 			# -----Observe S------
-# 			# - Get the new player total and the new ace bool
-
-# 			# Now, how do we handle the dealer? We are basing our states off the assumption, that the player
-# 			# would only ever see the dealer's first card
-
-# 			# Set the new state the player is in
-			
-			
-# 			# Calculate final reward
-# 			final_score = printFinalScore(next_dealer_hand, next_player_hand)
-
-# 			if final_score == 1:
-# 				wins += 1
-# 			elif final_score == 0:
-# 				ties += 1
-# 			else:
-# 				losses += 1
-			
-# 			# Reset table
-# 			dealer_hand = []
-# 			player_hand = []
-# 			player_total = 0
-# 			deck = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14] * 4
-	
-# 	print("Wins: ")
-# 	print(wins)
-# 	print("Ties: ")
-# 	print(ties)
-# 	print("Losses: ")
-# 	print(losses)
-# 	print("Win Differential: ")
-# 	print(wins - losses)
 
