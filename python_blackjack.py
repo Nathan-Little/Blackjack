@@ -220,8 +220,16 @@ def play_game_with_static_policy(num_games):
 	dealer_hand = []
 	player_hand = []
 	wins, ties, losses = 0, 0, 0
+	sum_val = 0
+	avg_val = 0
+	quit_game = 0
+	with open("WinDiffForHeuristic.csv", 'a+', newline='') as csvfile:
+			csvwriter = csv.writer(csvfile)
+			csvwriter.writerow(["i", "winDiff", "avg"])
 
 	for i in range(num_games):
+		quit_game = 0
+
 		dealer_hand = deal(deck)
 		player_hand = deal(deck)
 
@@ -234,35 +242,52 @@ def play_game_with_static_policy(num_games):
 			# Player hits
 			while curr_action == 'h' and player_total < 21:
 				player_total, dealer_card, ace_bool = evaluateHands(dealer_hand, player_hand)
-				# check if player busted
-				print("Player's Hand: ")
-				print(player_hand)
-				print("Player total: " + str(player_total))
-				print("Dealer's hand: ")
-				print(dealer_hand)
-				print("Dealer's first card: " + str(dealer_card))
-				print("ace bool: " + str(ace_bool))
-				print("\n")
 
 				if player_total > 21:
-					printFinalScore(dealer_hand, player_hand)
-					continue
+					
+					# Calculate final reward
+					final_score = score(dealer_hand, player_hand)
+
+					if final_score == 1:
+						wins += 1
+					elif final_score == 0:
+						ties += 1
+					else:
+						losses += 1
+			
+					sum_val += final_score
+					avg_val = sum_val / (i + 1)
+					with open("WinDiffForHeuristic.csv", 'a+', newline='') as csvfile:
+							csvwriter = csv.writer(csvfile)
+							csvwriter.writerow([i, wins - losses, avg_val])
+					
+					# Reset table
+					dealer_hand = []
+					player_hand = []
+					player_total = 0
+					deck = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14] * 4
+
+					quit_game = 1
+
+					break
+				
 				curr_action = static_policy(player_total, dealer_card)
 
 				if curr_action == 'h':
-					next_player_hand = hit(player_hand)
-					player_hand = next_player_hand
-
-			print("------BUST OR STAND------")
+					player_hand = hit(player_hand)
+					
+			
+			if quit_game == 1:
+				continue
 
 			while total(dealer_hand) < 17:
-				next_dealer_hand = hit(dealer_hand)
+				dealer_hand = hit(dealer_hand)
 			
 			if total(dealer_hand) >= 17:
-				next_dealer_hand = dealer_hand
-			
+				dealer_hand = dealer_hand
+
 			# Calculate final reward
-			final_score = printFinalScore(next_dealer_hand, player_hand)
+			final_score = score(dealer_hand, player_hand)
 
 			if final_score == 1:
 				wins += 1
@@ -270,12 +295,41 @@ def play_game_with_static_policy(num_games):
 				ties += 1
 			else:
 				losses += 1
-			
-		# Reset table
-		dealer_hand = []
-		player_hand = []
-		player_total = 0
-		deck = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14] * 4
+		
+			sum_val += final_score
+			avg_val = sum_val / (i + 1)
+			with open("WinDiffForHeuristic.csv", 'a+', newline='') as csvfile:
+					csvwriter = csv.writer(csvfile)
+					csvwriter.writerow([i, wins - losses, avg_val])
+			# Reset table
+			dealer_hand = []
+			player_hand = []
+			player_total = 0
+			deck = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14] * 4
+		
+		else:
+
+			# Calculate final reward
+			final_score = score(dealer_hand, player_hand)
+
+			if final_score == 1:
+				wins += 1
+			elif final_score == 0:
+				ties += 1
+			else:
+				losses += 1
+		
+			sum_val += final_score
+			avg_val = sum_val / (i + 1)
+			with open("WinDiffForHeuristic.csv", 'a+', newline='') as csvfile:
+					csvwriter = csv.writer(csvfile)
+					csvwriter.writerow([i, wins - losses, avg_val])
+			# Reset table
+			dealer_hand = []
+			player_hand = []
+			player_total = 0
+			deck = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14] * 4
+
 	
 	print("Wins: ")
 	print(wins)
@@ -323,8 +377,16 @@ def play_game_with_random_policy(num_games):
 	dealer_hand = []
 	player_hand = []
 	wins, ties, losses = 0, 0, 0
+	sum_val = 0
+	avg_val = 0
+
+	with open("WinDiffForRandomPolicy.csv", 'a+', newline='') as csvfile:
+			csvwriter = csv.writer(csvfile)
+			csvwriter.writerow(["i", "winDiff", "avg"])
 
 	for i in range(num_games):
+		quit_game = 0
+
 		dealer_hand = deal(deck)
 		player_hand = deal(deck)
 
@@ -341,35 +403,49 @@ def play_game_with_random_policy(num_games):
 				# 	if random_ace > 0.5:
 				# 		player_total = player_total - 10
 
-				# check if player busted
-				# print("Player's Hand: ")
-				# print(player_hand)
-				# print("Player total: " + str(player_total))
-				# print("Dealer's hand: ")
-				# print(dealer_hand)
-				# print("Dealer's first card: " + str(dealer_card))
-				# print("ace bool: " + str(ace_bool))
-				# print("\n")
 
 				if player_total > 21:
-					printFinalScore(dealer_hand, player_hand)
-					continue
+					final_score = score(dealer_hand, player_hand)
+
+					if final_score == 1:
+						wins += 1
+					elif final_score == 0:
+						ties += 1
+					else:
+						losses += 1
+
+					sum_val += final_score
+					avg_val = sum_val / (i + 1)
+
+					with open("WinDiffForRandomPolicy.csv", 'a+', newline='') as csvfile:
+								csvwriter = csv.writer(csvfile)
+								csvwriter.writerow([i, wins - losses, avg_val])
+					
+					dealer_hand = []
+					player_hand = []
+					player_total = 0
+					deck = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14] * 4
+
+					quit_game = 1
+
+					break
+
 				curr_action = coinflip()
 
 				if curr_action == 'h':
-					next_player_hand = hit(player_hand)
-					player_hand = next_player_hand
+					player_hand = hit(player_hand)
 
-			# print("------BUST OR STAND------")
+			if quit_game == 1:
+				continue
 
 			while total(dealer_hand) < 17:
-				next_dealer_hand = hit(dealer_hand)
+				dealer_hand = hit(dealer_hand)
 			
 			if total(dealer_hand) >= 17:
-				next_dealer_hand = dealer_hand
-			
+				dealer_hand = dealer_hand
+				
 			# Calculate final reward
-			final_score = printFinalScore(next_dealer_hand, player_hand)
+			final_score = score(dealer_hand, player_hand)
 
 			if final_score == 1:
 				wins += 1
@@ -378,11 +454,37 @@ def play_game_with_random_policy(num_games):
 			else:
 				losses += 1
 			
-		# Reset table
-		dealer_hand = []
-		player_hand = []
-		player_total = 0
-		deck = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14] * 4
+			sum_val += final_score
+			avg_val = sum_val / (i + 1)
+			with open("WinDiffForRandomPolicy.csv", 'a+', newline='') as csvfile:
+				csvwriter = csv.writer(csvfile)
+				csvwriter.writerow([i, wins - losses, avg_val])
+			# Reset table
+			dealer_hand = []
+			player_hand = []
+			player_total = 0
+			deck = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14] * 4
+		else:
+			# Calculate final reward
+			final_score = score(dealer_hand, player_hand)
+
+			if final_score == 1:
+				wins += 1
+			elif final_score == 0:
+				ties += 1
+			else:
+				losses += 1
+
+			sum_val += final_score
+			avg_val = sum_val / (i + 1)
+			with open("WinDiffForRandomPolicy.csv", 'a+', newline='') as csvfile:
+				csvwriter = csv.writer(csvfile)
+				csvwriter.writerow([i, wins - losses, avg_val])
+			# Reset table
+			dealer_hand = []
+			player_hand = []
+			player_total = 0
+			deck = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14] * 4
 	
 	print("Wins: ")
 	print(wins)
@@ -400,21 +502,30 @@ def coinflip():
 	else:
 		curr_action = 's'
 
-	print("First action: ")
-	print(curr_action)
+	# print("First action: ")
+	# print(curr_action)
 	return curr_action
 
-def play_game_with_qbot_policy(num_games, policy_string, eps):
+def play_game_with_qbot_policy(num_games, policy_string, eps, alpha_val, discount_val):
 	global deck, policy, actions
 	player_total = 0
 	dealer_hand = []
 	player_hand = []
 	wins, ties, losses = 0, 0, 0
+	sum_val = 0
+	avg_val = 0
 	# load in trained policy
 	policy = load_obj(policy_string)
 	# print(policy)
 
+	with open("WinDiffForPolicy15.csv", 'a+', newline='') as csvfile:
+			csvwriter = csv.writer(csvfile)
+			csvwriter.writerow(["i", "winDiff", "avg"])
+
 	for i in range(num_games):
+
+		quit_game = 0
+
 		# deal hands
 		dealer_hand = deal(deck)
 		player_hand = deal(deck)
@@ -427,75 +538,55 @@ def play_game_with_qbot_policy(num_games, policy_string, eps):
 
 			# -----Choose index of A from S using policy derived from Q------
 			curr_action_index = get_action(player_total, dealer_card, ace_bool, eps)
-			# print("Current State:")
-			# print([player_total, dealer_card, ace_bool])
 			
-			# Use index of A to get A
 			curr_action = actions[curr_action_index]
-			# print("First action: ")
-			# print(curr_action)
-
+			
 			# Player hits
 			while curr_action == 'h' and player_total < 21:
 				
 				player_total, dealer_card, ace_bool = evaluateHands(dealer_hand, player_hand)
-				# check if player busted
-				# print("Player's Hand: ")
-				# print(player_hand)
-				# print("Player total: " + str(player_total))
-				# print("Dealer's hand: ")
-				# print(dealer_hand)
-				# print("Dealer's first card: " + str(dealer_card))
-				# print("ace bool: " + str(ace_bool))
-				# print("\n")
 
 				if player_total > 21:
-    				### Return later
-					# How to update if player busts?????
-					# calculate the reward for when the player busts
-					# Reward should be based on observable info
-					printFinalScore(dealer_hand, next_player_hand)
+    				
+					final_score = score(dealer_hand, player_hand)
 
-					continue
+					if final_score == 1:
+						wins += 1
+					elif final_score == 0:
+						ties += 1
+					else:
+						losses += 1
 
-				# -----Choose A from S using policy derived from Q------
+					sum_val += final_score
+					avg_val = sum_val / (i + 1)
+					with open("WinDiffForPolicy15.csv", 'a+', newline='') as csvfile:
+							csvwriter = csv.writer(csvfile)
+							csvwriter.writerow([i, wins - losses, avg_val])
+
+					dealer_hand = []
+					player_hand = []
+					player_total = 0
+					deck = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14] * 4
+
+					quit_game = 1
+
+					break
+
 				curr_action_index = get_action(player_total, dealer_card, ace_bool, eps)
 				
 				curr_action = actions[curr_action_index]
 
-				# print("Next action:")
-				# print(curr_action)
-				# print("Curr action: " + curr_action)
-				# ------Take action A------
 				if curr_action == 'h':
+					player_hand = hit(player_hand)
 
-					next_player_hand = hit(player_hand)
+			if quit_game == 1:
+				# print("bust")
+				continue
 
-					
-					player_hand = next_player_hand
-
-			# print("------BUST OR STAND------")
-
-			next_player_hand = player_hand
-			
 			while total(dealer_hand) < 17:
-				next_dealer_hand = hit(dealer_hand)
+				dealer_hand = hit(dealer_hand)
 			
-			if total(dealer_hand) >= 17:
-				next_dealer_hand = dealer_hand
-			
-			# reward = score(next_dealer_hand, player_hand)
-			# -----Observe S------
-			# - Get the new player total and the new ace bool
-
-			# Now, how do we handle the dealer? We are basing our states off the assumption, that the player
-			# would only ever see the dealer's first card
-
-			# Set the new state the player is in
-			
-			
-			# Calculate final reward
-			final_score = printFinalScore(next_dealer_hand, next_player_hand)
+			final_score = score(dealer_hand, player_hand)
 
 			if final_score == 1:
 				wins += 1
@@ -504,12 +595,38 @@ def play_game_with_qbot_policy(num_games, policy_string, eps):
 			else:
 				losses += 1
 			
+			sum_val += final_score
+			avg_val = sum_val / (i + 1)
+			with open("WinDiffForPolicy15.csv", 'a+', newline='') as csvfile:
+					csvwriter = csv.writer(csvfile)
+					csvwriter.writerow([i, wins - losses, avg_val])
 			# Reset table
 			dealer_hand = []
 			player_hand = []
 			player_total = 0
 			deck = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14] * 4
-	
+		
+		else:
+			final_score = score(dealer_hand, player_hand)
+
+			if final_score == 1:
+				wins += 1
+			elif final_score == 0:
+				ties += 1
+			else:
+				losses += 1
+			
+			sum_val += final_score
+			avg_val = sum_val / (i + 1)
+			with open("WinDiffForPolicy15.csv", 'a+', newline='') as csvfile:
+					csvwriter = csv.writer(csvfile)
+					csvwriter.writerow([i, wins - losses, avg_val])
+			# Reset table
+			dealer_hand = []
+			player_hand = []
+			player_total = 0
+			deck = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14] * 4
+
 	print("Wins: ")
 	print(wins)
 	print("Ties: ")
@@ -519,21 +636,19 @@ def play_game_with_qbot_policy(num_games, policy_string, eps):
 	print("Win Differential: ")
 	print(wins - losses)
 
-	with open("Analysis.csv", 'a+', newline='') as csvfile:
-                    csvwriter = csv.writer(csvfile)
-                    csvwriter.writerow([policy_string, wins, ties, losses, wins - losses, 0.3, 0.9, eps])
-	
-# 
+	with open("AnalysisV3AfterBugFix.csv", 'a+', newline='') as csvfile:
+		csvwriter = csv.writer(csvfile)
+		csvwriter.writerow([policy_string, wins, ties, losses, wins - losses, alpha_val, discount_val, eps])
 
-def qbot(num_episodes, policy_name, eps):
+def qbot(num_episodes, policy_name, eps, alpha_val, discount_val):
 	global policy, actions, deck
 	
 	# initialize
 	final_reward = 0
 	curr_action_index = None
 	
-	alpha = .3
-	discount = 0.9
+	alpha = alpha_val
+	discount = discount_val
 	player_total = 0
 	dealer_hand = []
 	player_hand = []
@@ -542,13 +657,12 @@ def qbot(num_episodes, policy_name, eps):
 	policy = initializeQ()
 
 	for i in range(num_episodes):
+		quit_game = 0
 		# deal cards
 		dealer_hand = deal(deck)
 		player_hand = deal(deck)
 
 		player_total, dealer_card, ace_bool = evaluateHands(dealer_hand, player_hand)
-
-		curr_state = (player_total, dealer_card, ace_bool)
 		
 		# Find the index of the action that the policy says to play
 		curr_action_index = get_action(player_total, dealer_card, ace_bool, eps)
@@ -573,18 +687,7 @@ def qbot(num_episodes, policy_name, eps):
 			
 			# Player chooses to hit until stand is chosen
 			while curr_action == 'h' and player_total < 21:
-				
-		
-				# print("Player's Hand: ")
-				# print(player_hand)
-				# print("Player total: " + str(player_total))
-				# print("Dealer's hand: ")
-				# print(dealer_hand)
-				# print("Dealer's first card: " + str(dealer_card))
-				# print("ace bool: " + str(ace_bool))
-				# print("\n")
-
-
+			
 				# check if player busted from their last move - Game is over if so
 				if player_total > 21:
     				
@@ -596,11 +699,17 @@ def qbot(num_episodes, policy_name, eps):
 						
 						policy[curr_states_list[i]][curr_actions_list[i]] += alpha * (final_reward + (discount * policy[next_states_list[i]][next_actions_list[i]] - policy[curr_states_list[i]][curr_actions_list[i]]))
 
-					# # update the Q(s, a) estimated reward which caused the bust
-					# policy[curr_state][curr_action_index] += alpha * (final_reward + (discount * policy[next_state][next_action_index] - policy[curr_state][curr_action_index]))
+					dealer_hand = []
+					player_hand = []
+					player_total = 0
+					curr_action = None
+					deck = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14] * 4
 
-					continue
-				
+					quit_game = 1
+					
+					break
+					
+
 				# Set the current state
 				curr_state = (player_total, dealer_card, ace_bool)
 
@@ -654,7 +763,8 @@ def qbot(num_episodes, policy_name, eps):
 					# print("Next States List: ")
 					# print(next_states_list)
 					
-
+			if quit_game == 1:
+				continue
 			# At this point - the player has chosen to stand
 			next_player_hand = player_hand
 
@@ -681,15 +791,6 @@ def qbot(num_episodes, policy_name, eps):
 			curr_action = None
 			deck = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14] * 4
 
-			# print("Curr States List: ")
-			# print(curr_states_list)
-			# print("Next States List: ")
-			# print(next_states_list)
-			# print("Curr Actions List: ")
-			# print(curr_actions_list)
-			# print("Next Actions List: ")
-			# print(next_actions_list)
-			# print(policy)
 
 	save_obj(policy, policy_name)
 	# print(policy)
@@ -758,9 +859,6 @@ def get_action(player_total, dealer_card, aceBool, eps):
 
 	return currActionIndex
 	
-	
-	
-    		
 def containsAce(player_hand):
 	if 'A' in player_hand:
 		return 1
@@ -792,11 +890,13 @@ def initializeQ():
 
 
 if __name__ == "__main__":
-	# qbot(1000000, 'policy22', 0.1)
-	# play_game_with_qbot_policy(100000, "policy22", 0.1)
+	
+	# qbot(1000000, 'policy16', .1, .9, .9)
+	play_game_with_qbot_policy(100000, "policy16", .1, .9, .9)
+	# play_game_with_random_policy(100000)
 
 
-	# play_game_with_random_policy(1000)
-	play_game_with_static_policy(100000)
+	# play_game_with_random_policy(100000)
+	# play_game_with_static_policy(100000)
 	# game()
 
