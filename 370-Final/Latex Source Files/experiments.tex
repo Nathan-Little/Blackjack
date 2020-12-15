@@ -1,0 +1,18 @@
+
+\section{Experiments}
+\label{sec:expts}
+In order to determine the efficacy of our Q-learning Blackjack player, we experimented with different parameter settings, testing each on 100,000 hands, and compared the results of 100,000 hands played by the Q-learning bot, the random bot, and the heuristic bot. Prior to playing the 100,000 round game, the Q-learning bot was trained on 1,000,000 hands. The lone deck was shuffled prior to each hand played, and each game consisted only of the dealer and a single player. 
+
+\subsection{Experiment 1: Parameter Settings}
+In Experiment 1, we attempted to determine how two parameters, alpha and gamma, affected the performance of the Q-learning bot in terms of average rewards. The effects of alpha, the learning rate, were found by training 9 Q-learning policies, each with a different alpha value ranging from 0.1 to 0.9. Each of these policies had a gamma of 0.9 and an epsilon value of 0.1. Moreover, the effects of gamma, the discount factor, were derived by training 9 additional Q-learning policies, each with a different gamma ranging from 0.1 to 0.9. Each gamma test had alpha and epsilon values of 0.1. Each of these aforementioned policies were trained for 1,000,000 episodes. After training, 100,000 matches of Blackjack were played with each policy and the win differential was updated after each game. This experiment allowed us to determined if there were optimal values for these two parameters. 
+
+\subsection{Experiment 2: Player Performance}
+The goal of Experiment 2 was to evaluate the performance of the Q-learning bot relative to the random bot and the heuristic bot. First, the Q-learning bot was given a set of parameters (.1 for epsilon, .1 for alpha, and .9 for gamma) and trained on 1,000,000 hands. Then, each bot played 100,000 hands of Blackjack. The average reward was updated after each match, and we used these reward averages to determine the varying performance among the bots. We also experimented with the assumption that the dealer's hidden card is a 10, again running 100,000 hands for policies trained with and without that assumption. 
+
+% In this section, you should describe your experimental setup. What
+% were the questions you were trying to answer? What was the
+% experimental setup (number of trials, parameter settings, etc.)? What
+% were you measuring? You should justify these choices when
+% necessary. The accepted wisdom is that there should be enough detail
+% in this section that I could reproduce your work \emph{exactly} if I
+% were so motivated.

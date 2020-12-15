@@ -1,0 +1,37 @@
+
+% The \section{} command formats and sets the title of this
+% section. We'll deal with labels later.
+\section{Introduction}
+\label{sec:intro}
+We designed an AI which learns and subsequently utilizes a policy for Blackjack. Our Blackjack AI uses the model-free reinforcement learning algorithm Q-learning in order to develop a policy with which to play the game. We set out to determine whether Q-learning would yield a policy which maximizes returns, and we evaluated the efficacy of our reinforcement learning approach against the results of two different Blackjack strategies: a random player and a heuristic player, which utilizes an optimal static policy. \\
+
+\noindent The goal of our Q-learning algorithm was to derive an optimal policy which minimized losses or, more optimistically, maximized winnings. Blackjack is typically understood to hold a four percent disadvantage to the player who adheres to an optimal strategy, so such players should expect to lose \$4 for every \$100 bet \cite{b}. In their 1956 paper, Baldwin et al. devise an analytic approach to  Blackjack which yields a 0.62 percent disadvantage \cite{c}. Contemporary AI strategies often utilize Markov Chains since the game can be discretely modeled as a set of states, actions, transition probabilities and expected rewards, though such approaches often use card counting strategies to predict future states \cite{m}. At a high level, reinforcement learning algorithms are appealing to solve Blackjack since Blackjack is episodic and provides clear rewards in the form of winnings and losses. Indeed, de Granville finds that a Q-learning approach to Blackjack converges to a near optimal policy, outperforming the random player by a large margin \cite{q}. \\
+
+\noindent In this paper, we will describe the Q-learning algorithm used by our player, summarize the details of our experiments, and then evaluate the performance of our player against other strategies. 
+
+
+% In this section, you should introduce the reader to the problem you
+% are attempting to solve. For example, for the first project: describe
+% the dataset, and the prediction problem that you are
+% investigating. You should also cite and briefly describe other related
+% papers that have tackled this problem (or similar ones) in the past
+% --- things that came up during the course of your research. In the
+% AAAI style, citations look like \cite{aima} (see
+% the comments in the source file \texttt{intro.tex} to see how this
+% citation was produced). Conclude by summarizing how the
+% remainder of the paper is organized. \\
+
+% Citations: As you can see above, you create a citation by using the
+% \cite{} command. Inside the braces, you provide a "key" that is
+% uniue to the paper/book/resource you are citing. How do you
+% associate a key with a specific paper? You do so in a separate bib
+% file --- for this document, the bib file is called
+% project1.bib. Open that file to continue reading...
+
+% Note that merely hitting the "return" key will not start a new line
+% in LaTeX. To break a line, you need to end it with \\. To begin a 
+% new paragraph, end a line with \\, leave a blank
+% line, and then start the next line (like in this example).
+% Overall, the aim in this section is context-setting: what is the
+% big-picture surrounding the problem you are tackling here?
+

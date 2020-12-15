@@ -1,0 +1,11 @@
+
+\section{Conclusions}
+\label{sec:concl}
+We set out to study the performance of a Q-learning algorithm applied to Blackjack. We determined that while Q-learning outperforms a random player, it failed to converge to an optimal strategy, which contradicts the results of de Granville. This result could be due to the fact that de Granville also used actions such as double-down, insurance, and splitting a hand, each of which allow for higher average returns in certain scenarios. In the future, we would expand our algorithm to include these additional actions. We might also define states more specifically, using the actual cards held instead of just the point value of the hand. This would provide our bot more information concerning the current state of the game, thus informing decision making. 
+
+% In this section, briefly summarize your paper --- what problem did you
+% start out to study, and what did you find? What is the key result /
+% take-away message? It's also traditional to suggest one or two avenues
+% for further work, but this is optional.
+
+% Adding more actions, incorporate card counting, higher degree of randomness since we hit a plateau. Expand states in terms of cards held, not just the total point value. 
